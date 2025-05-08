@@ -1,3 +1,5 @@
+ SELECT
+ 
  1. Selezionare tutti gli studenti nati nel 1990 (160) ==> SELECT * FROM students WHERE YEAR(date_of_birth) = 1990;
 
  2. Selezionare tutti i corsi che valgono più di 10 crediti (479) ==> SELECT * FROM courses WHERE cfu > 10;
@@ -13,3 +15,78 @@
  7. Da quanti dipartimenti è composta l'università? (12) ==> SELECT COUNT(id) FROM db_university.departments;
  
  8. Quanti sono gli insegnanti che non hanno un numero di telefono? (50) ==> SELECT COUNT(*) FROM db_university.teachers WHERE phone IS NULL;
+
+
+ GROUP BY
+
+ 1. Contare quanti iscritti ci sono stati ogni anno ==> SELECT COUNT (*) AS `quanti_iscritti`, YEAR(enrolment_year) AS `anno_iscrizione` FROM `students` GROUP BY `anno_iscrizione`;
+
+ 2. Contare gli insegnanti che hanno l'ufficio nello stesso edificio ==> SELECT COUNT (*) FROM db_university.teachers GROUP BY office_address;
+
+ 3. Calcolare la media dei voti di ogni appello d'esame ==> SELECT AVG(`vote`) AS `exam_id`, `media_voto` FROM db_university.students GROUP BY exam_id ORDER BY `exam_id`;
+
+ 4. Contare quanti corsi di laurea ci sono per ogni dipartimento ==> SELECT COUNT(*) FROM db_university.degrees GROUP BY department_id ;
+
+ JOIN
+
+ 1. Selezionare tutti gli studenti iscritti al Corso di Laurea in Economia ==> SELECT `degrees`.`name` FROM db_university.students JOIN db_university.degrees ON `students`.`degrees_id` = `degrees`.`id` WHERE `degrees`.`name` = "Corso di Laurea in Economia";
+
+ 2. Selezionare tutti i Corsi di Laurea Magistrale del Dipartimento di Neuroscienze ==>
+ SELECT `departments`.`name` AS `departments_name` , `degrees`.`name` AS `degrees_name`
+ FROM db_university.departments JOIN db_university.degrees
+ ON `departments`.`id` = `degrees`.`departments_id`
+ WHERE `departments`.`name` = "Dipartimento di Neuroscienze"
+ AND `degrees`.`level` = "magistrale";
+
+ 3. Selezionare tutti i corsi in cui insegna Fulvio Amato (id=44) ==>
+ SELECT *
+ FROM `courses`
+ JOIN
+ JOIN
+ #WHERE `teachers`.`id` = 44
+ WHERE
+
+ 4. Selezionare tutti gli studenti con i dati relativi al corso di laurea a cui sono iscritti e il relativo dipartimento, in ordine alfabetico per cognome e nome ==>
+ SELECT `students`.`name` AS `students_name`,
+ `students`.`surname` AS `students_surname`,
+ `departments`.`name` AS `departments_name`,
+ `degrees`.`name` AS `degrees_name`
+ FROM `students`
+ JOIN `degrees` ON `degrees`.`id` = `students`.`degrees_id`
+ JOIN `departments` ON `departments`.`id` = `degrees`.`departments_id`
+ ORDER BY `students_name`, `students_surname`
+
+
+ 5. Selezionare tutti i corsi di laurea con i relativi corsi e insegnanti ==>
+ SELECT *
+ FROM degrees
+ JOIN courses ON degrees.id = courses.degrees_id
+ JOIN course_teacher ON courses.id = course_teacher.courses_id
+ JOIN teachers ON teachers.id = course_teacher.teacher_id
+
+
+ 6. Selezionare tutti i docenti che insegnano nel Dipartimento di Matematica (54) ==>
+ SELECT DISTINCT 
+   teachers.name AS nome_insegnante, 
+   teachers.surname AS cognome_insegnante, 
+   departments.name AS nome_dipartimento 
+ FROM teachers
+ JOIN course_teacher ON teachers.id = course_teacher.teacher_id
+ JOIN courses ON courses.id = course_teacher.course_id
+ JOIN degrees ON courses.degrees_id = degrees.id
+ JOIN departments ON departments.id = degrees.department_id
+ WHERE departments.name = "Dipartimento di Matematica"
+
+
+ 7. BONUS: Selezionare per ogni studente il numero di tentativi sostenuti per ogni esame, stampando anche il voto massimo. Successivamente filtrare i tentativi con voto minimo 18 ==>
+ SELECT (`exam_students`.`vote`) AS `numero_tentativi`,
+    `students`.`surname`,
+    `students`.`name`,
+    `exams`.`course_id`,
+    MAX (`exams_student`.`vote`) AS `voto_massimo`
+    MIN (`exams_student`.`vote`) AS `voto_minimo`
+ FROM students 
+ JOIN `exam_student` ON `students`.`id` = `exam_student`.`student_id`
+ JOIN `exams` ON `exams`.`id` = `exam_student`.`exam_id`
+ GROUP BY `students`.`id`, `exams`.`course_id`
+ HAVING `voto_massimo` >= 18
